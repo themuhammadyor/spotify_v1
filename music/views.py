@@ -54,17 +54,17 @@ class SongSetAPIView(ModelViewSet):
 
     @action(default=True, method=["GET"])
     def view(self, request, *args, kwrgs):
-        post = self.get_object()
+        song = self.get_object()
         with atomic():
-            post.viewing += 1
-            post.save()
+            song.viewing += 1
+            song.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(default=False, method=["GET"])
     def top(self, request, *args, **kwargs):
-        posts = self.get_queryset()
-        posts = posts.order_by('-viewing')[:3]
-        serializer = PostSerializer(songs, many=True)
+        songs = self.get_queryset()
+        songs = songs.order_by('-viewing')[:3]
+        serializer = SongSerializer(songs, many=True)
         return Response(data=serializer.data)
 
 

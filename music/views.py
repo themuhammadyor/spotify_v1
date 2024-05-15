@@ -1,3 +1,5 @@
+from rest_framework.pagination import LimitOffsetPagination
+
 from django.shortcuts import render
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
@@ -5,6 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from rest_framework import filters
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Artist, Album, Song
 from .serializers import ArtistSerializer, AlbumSerializer, SongSerializer
@@ -45,28 +49,22 @@ class AlbumAPIViewSet(ModelViewSet):
 
 
 class SongSetAPIView(ModelViewSet):
+    # def get_queryset(self, request):
+    #     search = self.request.data
+    #     data = Song.objects.filter(title=data)
+    #     return Song.objects.all()
+
     queryset = Song.objects.all()
     serializer_class = SongSerializer
     authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated, )
+    # permission_classes = (IsAuthenticated, )
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ['title', 'album__title', 'album__artist__name']
+    pagination_class = LimitOffsetPagination
+    # filter_backends = (DjangoFilterBackend)
+    # filterset_fields = ['album__artist__name', 'album__title']
 
     # pagination_class = LimitOffsetPagination
-
-    @action(default=True, method=["GET"])
-    def view(self, request, *args, kwrgs):
-        song = self.get_object()
-        with atomic():
-            song.viewing += 1
-            song.save()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @action(default=False, method=["GET"])
-    def top(self, request, *args, **kwargs):
-        songs = self.get_queryset()
-        songs = songs.order_by('-viewing')[:3]
-        serializer = SongSerializer(songs, many=True)
-        return Response(data=serializer.data)
-
 
 # class SongDetailAPIView(APIView):
 #     def get(self, request, id):
